@@ -13,7 +13,30 @@ const Login = ({ setCurrentPage }) => {
   // handle login form submit
   const handleLogin = async(e) => {
     e.preventDefault();
-  }
+
+    if (!validateEmail(email)) {
+        setError("Please enter a valid email address.");
+        return;
+    }
+
+    if (!password) {
+        setError("Please enter the password");
+        return;
+    }
+
+    setError("");
+
+    // Login API Call
+    try {
+        // your login API logic here
+    } catch (error) {
+        if (error.response && error.response.data.message) {
+            setError(error.response.data.message);
+        } else {
+            setError("Something went wrong. Please try again.");
+        }
+    }
+  };
 
   return <div className='w-[90vw] md:w-[33vw] p-7 flex flex-col justify-center'>
     <h3 className='text-lg font-semibold text-black'>Welcome Back</h3>
@@ -40,7 +63,7 @@ const Login = ({ setCurrentPage }) => {
 
       {error && <p className="text-red-500 text-xs pb-2.5"> {error} </p>}
 
-      <button type="submit" className="">
+      <button type="submit" className="btn-primary">
         LOGIN
       </button>
       
