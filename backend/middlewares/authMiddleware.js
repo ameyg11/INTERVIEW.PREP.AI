@@ -2,20 +2,34 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
 // Middleware to protect routes
-const protect = async (req, res, next) =>{
-    try{
-        let token = req.headers.authorization;
+const protect = async (req, res, next) => {
+    let token;
 
-        if(token && token.startsWith("Bearer")) {
-            token = token.split(" ")[1];  // Extract token
+    // 1. Check if the token exists and is in the correct format
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        try {
+            // 2. Extract the token from the "Bearer <token>" string
+            token = req.headers.authorization.split(' ')[1];
+
+            // 3. Verify the token is valid
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            req.user = await User.findById(decoded.id).select("-password");
+
+            // 4. Find the user from the token's payload and attach it to the request
+            // This makes req.user available in the next function (e.g., your controller)
+            req.user = await User.findById(decoded.id).select('-password');
+
+            // 5. If everything is successful, proceed to the next middleware/controller
             next();
-        }else{
-            res.status(401).json({ message: "Token Failed", err: err.message });
+        } catch (error) {
+            // This block runs if jwt.verify fails (invalid signature, expired, etc.)
+            console.error('TOKEN VERIFICATION FAILED:', error);
+            res.status(401).json({ success: false, message: 'Not authorized, token failed' });
         }
-    }catch(err){
-        res.status(401).json({ message: "Token Failed", err: err.message });
+    }
+
+    // This runs if the 'if' condition at the top is false
+    if (!token) {
+        res.status(401).json({ success: false, message: 'Not authorized, no token provided' });
     }
 };
 
