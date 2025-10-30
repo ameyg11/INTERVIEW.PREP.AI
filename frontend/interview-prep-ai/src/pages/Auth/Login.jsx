@@ -29,7 +29,7 @@ const Login = ({ setCurrentPage }) => {
 
     // Login API Call
     try {
-        // your login API logic here
+        
     } catch (error) {
         if (error.response && error.response.data.message) {
             setError(error.response.data.message);
