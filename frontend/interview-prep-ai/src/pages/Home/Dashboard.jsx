@@ -8,6 +8,8 @@ import axiosInstance from "../../utils/axiosinstance";
 import { API_PATHS } from "../../utils/apiPaths";
 import SummaryCard from "../../components/Cards/SummaryCard";
 import moment from "moment";
+import Modal from "../../components/Modal";
+import CreateSessionForm from "./CreateSessionForm";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -58,15 +60,27 @@ const Dashboard = () => {
             />
           ))}
         </div>
+
+        <button
+          className="h-12 md:h-12 flex items-center justify-center gap-3 bg-gradient-to-r from-[#FF9324] to-[#e99a4b] text-sm font-semibold text-white px-7 py-2 rounded-full hover:text-white transition-colors cursor-pointer hover:shadow-orange-400 fixed bottom-10 md:bottom-20 right-10 md:right-20 "
+          onClick={() => setOpenCreateModal(true)}
+        >
+          <LuPlus className="text-2xl text-white" />
+          Add New
+        </button>
       </div>
 
-      <button
-        className="h-12 md:h-12 flex items-center justify-center gap-3 bg-gradient-to-r from-[#FF9324] to-[#e99a4b] text-sm font-semibold text-white px-7 py-2 rounded-full hover:text-white transition-colors cursor-pointer hover:shadow-orange-400 fixed bottom-10 md:bottom-20 right-10 md:right-20 "
-        onClick={() => setOpenCreateModal(true)}
+      <Modal
+        isOpen={openCreateModal}
+        onClose={() => {
+          setOpenCreateModal(false);
+        }}
+        hideHeader
       >
-        <LuPlus className="text-2xl text-white" />
-        Add New
-      </button>
+        <div>
+          <CreateSessionForm />
+        </div>
+      </Modal>
     </DashboardLayout>
   );
 };

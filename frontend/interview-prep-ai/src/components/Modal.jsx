@@ -44,4 +44,5 @@ const Modal = ({ children, isOpen, onClose, title, hideHeader }) => {
   </div>
 }
 
-export default Modal
+
+export default Modal 

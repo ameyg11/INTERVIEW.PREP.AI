@@ -44,4 +44,5 @@ const Input = ({ value, onChange, label, placeholder, type }) => {
   </div>
 }
 
-export default Input
+
+export default Input;
