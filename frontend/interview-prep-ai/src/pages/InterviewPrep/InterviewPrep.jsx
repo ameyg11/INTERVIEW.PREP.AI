@@ -10,6 +10,9 @@ import RoleInfoHeader from "./components/RoleInfoHeader";
 import { API_PATHS } from "../../utils/apiPaths";
 import axiosInstance from "../../utils/axiosinstance";
 import QuestionCard from "../../components/Cards/QuestionCard";
+import Drawer from "../../components/Drawer";
+import SkeletonLoader from "../../components/Loader/SkeletonLoader";
+import AIResponsePreview from "./components/AIResponsePreview";
 
 const InterviewPrep = () => {
   const { sessionId } = useParams();
@@ -39,10 +42,49 @@ const InterviewPrep = () => {
   };
 
   // Generate Concept Explanation
-  const generateConceptExplanation = async (question) => {};
+  const generateConceptExplanation = async (question) => {
+    try {
+      setErrMsg("");
+      setExplanation(null);
+
+      setIsLoading(true);
+      setOpenLeanMoreDrawer(true);
+
+      const response = await axiosInstance.post(
+        API_PATHS.AI.GENERATE_EXPLANATION,
+        {
+          question,
+        }
+      );
+      if (response.data) {
+        setExplanation(response.data);
+      }
+    } catch (error) {
+      setExplanation(null);
+      setErrMsg("Failed to generate explanation, Try again later");
+      console.log(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Pin Question
-  const toggleQuestionPinStatus = async (questionId) => {};
+  const toggleQuestionPinStatus = async (questionId) => {
+    try {
+      const response = await axiosInstance.post(
+        API_PATHS.QUESTION.PIN(questionId)
+      );
+
+      console.log(response);
+
+      if (response.data && response.data.question) {
+        // toast.success('Question Pinned Successfully')
+        fetchSessionDetailsById();
+      }
+    } catch (error) {
+      console.log("Error: ", error);
+    }
+  };
 
   // Add more questions to a session
   const uploadMoreQuestions = async () => {};
@@ -105,7 +147,7 @@ const InterviewPrep = () => {
                           generateConceptExplanation(data.question)
                         }
                         isPinned={data?.isPinned}
-                        onTogglePin={() => toggleQuestionPinStatus(data.id)}
+                        onTogglePin={() => toggleQuestionPinStatus(data._id)}
                       />
                     </>
                   </motion.div>
@@ -113,6 +155,24 @@ const InterviewPrep = () => {
               })}
             </AnimatePresence>
           </div>
+        </div>
+
+        <div>
+          <Drawer
+            isOpen={openLeanMoreDrawer}
+            onClose={() => setOpenLeanMoreDrawer(false)}
+            title={!isLoading && explanation?.title}
+          >
+            {errMsg && (
+              <p className="flex gap-2 text-sm text-amber-600 font-medium">
+                <LuCircleAlert className=" mt-1" /> {errMsg}
+              </p>
+            )}
+            {isLoading && <SkeletonLoader />}
+            {!isLoading && explanation && (
+              <AIResponsePreview content={explanation?.explanation} />
+            )}
+          </Drawer>
         </div>
       </div>
     </DashboardLayout>

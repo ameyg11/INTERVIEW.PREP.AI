@@ -1,14 +1,23 @@
-const { GoogleGenAI } = require("@google/genai");
+const { VertexAI } = require("@google-cloud/vertexai");
 const {
   conceptExplainPrompt,
   questionAnswerPrompt,
 } = require("../utils/prompts");
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+// Create Vertex client
+const vertex = new VertexAI({
+  project: process.env.PROJECT_ID,
+  location: process.env.LOCATION || "us-central1",
+});
 
-// @desc Generate interview questions and answers using Gemini
-// @route POST /api/ai/generate-questions
-// @access Private
+// Load the model
+const model = vertex.getGenerativeModel({
+  model: "models/gemini-2.5-flash-lite"
+});
+
+// ----------------------------------------------------------------------
+// Generate Interview Q&A
+// ----------------------------------------------------------------------
 const generateInterviewQuestions = async (req, res) => {
   try {
     const { role, experience, topicsToFocus, numberOfQuestions } = req.body;
@@ -24,34 +33,38 @@ const generateInterviewQuestions = async (req, res) => {
       numberOfQuestions
     );
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash-lite",
-      contents: prompt,
-    });
+    const result = await model.generateContent(prompt);
 
-    let rawText = response.text;
+    const rawText =
+      result.response?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    // Clean it: Remove ```json and ``` from beginning and end
+    if (!rawText) {
+      console.error("Vertex raw response:", result);
+      return res.status(500).json({
+        message: "AI returned empty or malformed response",
+      });
+    }
+
     const cleanedText = rawText
-      .replace(/^```json\s*/, "") // remove starting ```json
-      .replace(/```$/, "") // remove ending ```
-      .trim(); // remove extra spaces
+      .replace(/^```json\s*/, "")
+      .replace(/```$/, "")
+      .trim();
 
-    // Now safe to parse
     const data = JSON.parse(cleanedText);
 
     res.status(200).json(data);
   } catch (error) {
+    console.error("🔥 VertexAI ERROR (generateInterviewQuestions):", error);
     res.status(500).json({
-      message: "Failed to generate questions",
+      message: "Failed to generate interview questions",
       error: error.message,
     });
   }
 };
 
-// @desc Generate explains an interview question
-// @route POST /api/ai/generate-explanation
-// @access Private
+// ----------------------------------------------------------------------
+// Generate Concept Explanation
+// ----------------------------------------------------------------------
 const generateConceptExplanation = async (req, res) => {
   try {
     const { question } = req.body;
@@ -62,29 +75,36 @@ const generateConceptExplanation = async (req, res) => {
 
     const prompt = conceptExplainPrompt(question);
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash-lite",
-      contents: prompt,
-    });
+    const result = await model.generateContent(prompt);
 
-    let rawText = response.text;
+    const rawText =
+      result.response?.candidates?.[0]?.content?.parts?.[0]?.text;
 
-    // Clean it: Remove ```json and ``` from beginning and end
+    if (!rawText) {
+      console.error("Vertex raw response:", result);
+      return res.status(500).json({
+        message: "AI returned empty or malformed response",
+      });
+    }
+
     const cleanedText = rawText
-      .replace(/^```json\s*/, "") // remove starting ```json
-      .replace(/```$/, "") // remove ending ```
-      .trim(); // remove extra spaces
+      .replace(/^```json\s*/, "")
+      .replace(/```$/, "")
+      .trim();
 
-    // Now safe to parse
     const data = JSON.parse(cleanedText);
 
     res.status(200).json(data);
   } catch (error) {
+    console.error("🔥 VertexAI ERROR (generateConceptExplanation):", error);
     res.status(500).json({
-      message: "Failed to generate questions",
+      message: "Failed to generate concept explanation",
       error: error.message,
     });
   }
 };
 
-module.exports = { generateInterviewQuestions, generateConceptExplanation };
+module.exports = {
+  generateInterviewQuestions,
+  generateConceptExplanation,
+};

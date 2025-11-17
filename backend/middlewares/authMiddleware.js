@@ -13,7 +13,7 @@ const protect = async (req, res, next) => {
 
             // 3. Verify the token is valid
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
+            
             // 4. Find the user from the token's payload and attach it to the request
             // This makes req.user available in the next function (e.g., your controller)
             req.user = await User.findById(decoded.id).select('-password');
